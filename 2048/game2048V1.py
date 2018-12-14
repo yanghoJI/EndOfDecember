@@ -19,6 +19,12 @@ class game_2048:
             self.BG = cv2.imread('./images/3by3.png')
         elif self.dim == 4:
             self.BG = cv2.imread('./images/4by4.png')
+
+        self.WSAD = cv2.imread('./images/wsad.png')
+        self.WSAD = self.WSAD[:260, :]
+        self.WSAD = cv2.resize(self.WSAD, (200, 130))
+        print(self.WSAD.shape)
+
         self.BG = cv2.resize(self.BG, (500, 500))
         self.disp = 0
         self.setdisp()
@@ -49,7 +55,15 @@ class game_2048:
         disp = np.zeros((self.h, self.w, 3), dtype='uint8')
         disp[:,:,:] = 234
         disp[200:, :] = self.BG
+        disp[50:180, 280:-20, :] += self.WSAD
+        #self.puttext('UP : W\tDOWN : S\tLEFT : A\tRIGHT : D\nNew game : Q', (20, 100))
         self.disp = disp
+        self.puttext('Newgame: Q', (20, 90))
+        #self.puttext('UP : W    DOWN : S', (20, 100))
+        #self.puttext('LEFT : A    RIGHT : D', (20, 130))
+        #self.puttext('Newgame: Q', (20, 160))
+
+        #self.disp = disp
 
     def puttext(self, text, LB, size = 1.3):
         #cv2.putText(self.disp, text, LB, cv2.FONT_HERSHEY_SIMPLEX, size, (0, 0, 0), 2, cv2.LINE_AA)
@@ -80,7 +94,9 @@ class game_2048:
     def casttwo(self, stat, num):
         zeroidxX, zeroidxY= np.where(stat == 0)
         samidx = random.sample(range(len(zeroidxX)), num)
-        stat[zeroidxX[samidx], zeroidxY[samidx]] = 2
+        samplelist = [2,2,2,2,4]
+        num = random.sample(samplelist, 1)
+        stat[zeroidxX[samidx], zeroidxY[samidx]] = num
         return stat
 
 
@@ -170,20 +186,27 @@ class game_2048:
 
 
     def step(self, action):
-        if action != 'l':
-            temparr = self.rot(self.stat, action)
-        else:
+
+        if action == None:
+            S = self.stat
+            R = 0
+            D = 0
+            return (S, R, D)
+        elif action == 'l':
             temparr = np.copy(self.stat)
+        else:
+            temparr = self.rot(self.stat, action)
+
 
         temparr, score = self.calib(temparr)
         temparr = self.push_left(temparr)
 
-        if len(np.where(temparr == 0)[0]) != 0:
-            temparr = self.casttwo(temparr, 1)
-
         self.score += score
         if action != 'l':
             temparr = self.unrot(temparr, action)
+
+        if (len(np.where(temparr == 0)[0]) != 0) and (not np.array_equal(temparr, self.stat)):
+            temparr = self.casttwo(temparr, 1)
 
         self.stat = temparr
 
@@ -209,7 +232,10 @@ class game_2048:
                 actkey = 'l'
             elif actkey == 100:
                 actkey = 'r'
+            elif actkey == 113:
+                break
             else:
+                actkey = None
                 print('key error')
             S, R, D = game.step(actkey)
             self.setdisp()
@@ -224,6 +250,6 @@ class game_2048:
 
 if __name__ == "__main__":
     while 1:
-        game = game_2048(3)
+        game = game_2048(4)
         game.run()
 
