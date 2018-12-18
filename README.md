@@ -1,5 +1,10 @@
 # EndOfDecember
 
+<p align="center">
+<img  src=./image/game.png width="50%">
+</p>
+</br>
+
 ## How to play
 
 1. requirements
