@@ -237,6 +237,6 @@ class Game2048:
 if __name__ == "__main__":
     while 1:
         # set size of grid 3 or 4
-        game = Game2048(3)
+        game = Game2048(4)
         game.run()
 
