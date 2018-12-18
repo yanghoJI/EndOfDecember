@@ -1,15 +1,15 @@
 import numpy as np
 import random
 import cv2
+import time
 
-
-class game_2048:
+class Game2048:
     def __init__(self, dim=4):
         self.dim = dim
-        self.statinit = np.zeros((dim,dim), dtype=int)
+        self.stat_init = np.zeros((dim,dim), dtype=int)
         self.stat = np.zeros((dim, dim), dtype=int)
         self.score = 0
-        self.stat = self.casttwo(self.stat, 2)
+        self.stat = self.fillNumber(self.stat, 2)
         print(self.stat)
 
         ## set display
@@ -23,55 +23,32 @@ class game_2048:
         self.WSAD = cv2.imread('./images/wsad.png')
         self.WSAD = self.WSAD[:260, :]
         self.WSAD = cv2.resize(self.WSAD, (200, 130))
-        print(self.WSAD.shape)
-
         self.BG = cv2.resize(self.BG, (500, 500))
         self.disp = 0
-        self.setdisp()
-        self.dispArr()
 
-        '''
-        self.push_left()
-        print(self.stat)
-        tempstat = self.rot(self.stat, direc='r')
-        print(tempstat)
-        tempstat = self.unrot(tempstat, direc='r')
-        print(tempstat)
-
-        tempstat = self.rot(self.stat, direc='u')
-        print(tempstat)
-        tempstat = self.unrot(tempstat, direc='u')
-        print(tempstat)
-
-        tempstat = self.rot(self.stat, direc='d')
-        print(tempstat)
-        tempstat = self.unrot(tempstat, direc='d')
-        print(tempstat)
-        '''
+        self.setDispInit()
+        self.setDispArray()
 
 
-    def setdisp(self):
 
+    def setDispInit(self):
+        # initialize display
         disp = np.zeros((self.h, self.w, 3), dtype='uint8')
         disp[:,:,:] = 234
         disp[200:, :] = self.BG
         disp[50:180, 280:-20, :] += self.WSAD
-        #self.puttext('UP : W\tDOWN : S\tLEFT : A\tRIGHT : D\nNew game : Q', (20, 100))
         self.disp = disp
-        self.puttext('Newgame: Q', (20, 90))
-        #self.puttext('UP : W    DOWN : S', (20, 100))
-        #self.puttext('LEFT : A    RIGHT : D', (20, 130))
-        #self.puttext('Newgame: Q', (20, 160))
+        self.putText('Newgame: Q', (20, 90))
 
-        #self.disp = disp
 
-    def puttext(self, text, LB, size = 1.3):
-        #cv2.putText(self.disp, text, LB, cv2.FONT_HERSHEY_SIMPLEX, size, (0, 0, 0), 2, cv2.LINE_AA)
+    def putText(self, text, LB, size = 1.3):
+        # write text on display
         cv2.putText(self.disp, text, LB, cv2.FONT_HERSHEY_COMPLEX_SMALL, size, (0, 0, 0), 2, 100)
 
 
-    def dispArr(self):
-        self.puttext('Score : {}'.format(self.score), (20, 60))
+    def setDispArray(self):
+        # write state-array on display
+        self.putText('Score : {}'.format(self.score), (20, 60))
         if self.dim == 3:
             fontinter = 20
             fontsize = 3
@@ -88,10 +65,11 @@ class game_2048:
                 if val == '0':
                     continue
                 LB = (int(inix + interval * col - len(val) * fontinter), int(iniy + interval * row))
-                self.puttext(val, LB, fontsize)
+                self.putText(val, LB, fontsize)
 
 
-    def casttwo(self, stat, num):
+    def fillNumber(self, stat, num):
+        # fill empty space with number
         zeroidxX, zeroidxY= np.where(stat == 0)
         samidx = random.sample(range(len(zeroidxX)), num)
         samplelist = [2,2,2,2,4]
@@ -100,19 +78,20 @@ class game_2048:
         return stat
 
 
-    def push_left(self, stat):
-        tempstat = np.copy(self.statinit)
+    def pushLeft(self, stat):
+        # push number against left-side
+        tempstat = np.copy(self.stat_init)
         for row in range(self.dim):
             nonzeroidxcol = np.where(stat[row, :] != 0)
             temp = stat[row, :][nonzeroidxcol]
             if len(temp) > 0:
                 tempstat[row, :len(temp)] = temp
 
-        #stat = tempstat
         return tempstat
 
 
-    def rot(self,stat, direc):
+    def rotArray(self,stat, direc):
+        # rotate array
         if direc == 'r':
             return np.fliplr(stat)
 
@@ -127,7 +106,8 @@ class game_2048:
             return 0
 
 
-    def unrot(self,stat, direc):
+    def unrotArray(self,stat, direc):
+        # undo rotation
         if direc == 'r':
             return np.fliplr(stat)
 
@@ -142,9 +122,10 @@ class game_2048:
             return 0
 
 
-    def calib(self, stat):
+    def calculNextArray(self, stat):
+        # calculate next array
         P = stat[:, 0]
-        result = np.copy(self.statinit)
+        result = np.copy(self.stat_init)
         score = 0
         for col in range(1, self.dim):
             tempP = np.zeros(P.shape)
@@ -170,13 +151,15 @@ class game_2048:
 
         return (result, score)
 
+
     def cheakDone(self, stat):
+        # cheak Done condition
         tscore = 0
-        temparr, score = self.calib(stat)
+        temparr, score = self.calculNextArray(stat)
         tscore += score
         for a in ('r','u','d'):
-            temparr = self.rot(stat, a)
-            temparr, score = self.calib(temparr)
+            temparr = self.rotArray(stat, a)
+            temparr, score = self.calculNextArray(temparr)
             tscore += score
 
         if tscore == 0:
@@ -186,7 +169,7 @@ class game_2048:
 
 
     def step(self, action):
-
+        # do one step and return state, reward, done for RL
         if action == None:
             S = self.stat
             R = 0
@@ -195,21 +178,19 @@ class game_2048:
         elif action == 'l':
             temparr = np.copy(self.stat)
         else:
-            temparr = self.rot(self.stat, action)
+            temparr = self.rotArray(self.stat, action)
 
-
-        temparr, score = self.calib(temparr)
-        temparr = self.push_left(temparr)
+        temparr, score = self.calculNextArray(temparr)
+        temparr = self.pushLeft(temparr)
 
         self.score += score
         if action != 'l':
-            temparr = self.unrot(temparr, action)
+            temparr = self.unrotArray(temparr, action)
 
         if (len(np.where(temparr == 0)[0]) != 0) and (not np.array_equal(temparr, self.stat)):
-            temparr = self.casttwo(temparr, 1)
+            temparr = self.fillNumber(temparr, 1)
 
         self.stat = temparr
-
 
         S = self.stat
         R = score
@@ -220,7 +201,9 @@ class game_2048:
 
         return (S, R, D)
 
+
     def run(self):
+        # play game
         cv2.imshow('2048', game.disp)
         while 1:
             actkey = cv2.waitKey(-1)
@@ -238,18 +221,22 @@ class game_2048:
                 actkey = None
                 print('key error')
             S, R, D = game.step(actkey)
-            self.setdisp()
-            self.dispArr()
+            self.setDispInit()
+            self.setDispArray()
             cv2.imshow('2048', game.disp)
             if D == 1:
-                self.puttext('Game over !!', (int(self.w * 0.1), int(self.h * 0.5)), 2.5)
+                self.putText('Game over !!', (int(self.w * 0.15), int(self.h * 0.5)), 2.5)
                 print('game over\t Score : {}'.format(game.score))
                 cv2.imshow('2048', game.disp)
-                actkey = cv2.waitKey(-1)
+                cv2.waitKey(-1)
+                time.sleep(3)
+
                 break
+
 
 if __name__ == "__main__":
     while 1:
-        game = game_2048(4)
+        # set size of grid 3 or 4
+        game = Game2048(3)
         game.run()
 
