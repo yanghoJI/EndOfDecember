@@ -17,8 +17,13 @@ class Game2048:
         self.w = 500
         if self.dim == 3:
             self.BG = cv2.imread('./images/3by3.png')
+            self.dispmode = True
         elif self.dim == 4:
             self.BG = cv2.imread('./images/4by4.png')
+            self.dispmode = True
+        else:
+            self.BG = cv2.imread('./images/4by4.png')
+            self.dispmode = False
 
         self.WSAD = cv2.imread('./images/wsad.png')
         self.WSAD = self.WSAD[:260, :]
@@ -27,7 +32,8 @@ class Game2048:
         self.disp = 0
 
         self.setDispInit()
-        self.setDispArray()
+        if self.dispmode:
+            self.setDispArray()
 
 
 
@@ -221,9 +227,12 @@ class Game2048:
                 actkey = None
                 print('key error')
             S, R, D = game.step(actkey)
-            self.setDispInit()
-            self.setDispArray()
-            cv2.imshow('2048', game.disp)
+            if self.dispmode:
+                self.setDispInit()
+                self.setDispArray()
+                cv2.imshow('2048', game.disp)
+            else:
+                print(self.stat)
             if D == 1:
                 self.putText('Game over !!', (int(self.w * 0.15), int(self.h * 0.5)), 2.5)
                 print('game over\t Score : {}'.format(game.score))
