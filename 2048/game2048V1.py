@@ -10,16 +10,21 @@ class Game2048:
         self.stat = np.zeros((dim, dim), dtype=int)
         self.score = 0
         self.stat = self.fillNumber(self.stat, 2)
+        self.dispstat = np.zeros((dim, dim), dtype=int)
         print(self.stat)
 
         ## set display
         self.h = 700
         self.w = 500
+        self.edge = cv2.imread('./images/edge6.png')
         if self.dim == 3:
             self.BG = cv2.imread('./images/3by3.png')
+            self.edge = cv2.resize(self.edge, (self.w // self.dim, self.w // self.dim))
             self.dispmode = True
+
         elif self.dim == 4:
             self.BG = cv2.imread('./images/4by4.png')
+            self.edge = cv2.resize(self.edge, (self.w // self.dim, self.w // self.dim))
             self.dispmode = True
         else:
             self.BG = cv2.imread('./images/4by4.png')
@@ -28,7 +33,7 @@ class Game2048:
         self.WSAD = cv2.imread('./images/wsad.png')
         self.WSAD = self.WSAD[:260, :]
         self.WSAD = cv2.resize(self.WSAD, (200, 130))
-        self.BG = cv2.resize(self.BG, (500, 500))
+        self.BG = cv2.resize(self.BG, (self.w, self.w))
         self.disp = 0
 
         self.setDispInit()
@@ -54,6 +59,7 @@ class Game2048:
 
     def setDispArray(self):
         # write state-array on display
+        self.edgedisp = np.zeros((self.h, self.w, 3), dtype='uint8')
         self.putText('Score : {}'.format(self.score), (20, 60))
         if self.dim == 3:
             fontinter = 20
@@ -72,6 +78,12 @@ class Game2048:
                     continue
                 LB = (int(inix + interval * col - len(val) * fontinter), int(iniy + interval * row))
                 self.putText(val, LB, fontsize)
+
+                if self.stat[row, col] != self.dispstat[row, col]:
+                    rowst = int(interval*row + 200)
+                    colst = int(interval*col)
+                    self.edgedisp[rowst:rowst+self.edge.shape[0], colst:colst+self.edge.shape[0]] = self.edge
+        self.dispstat = np.copy(self.stat)
 
 
     def fillNumber(self, stat, num):
@@ -230,13 +242,18 @@ class Game2048:
             if self.dispmode:
                 self.setDispInit()
                 self.setDispArray()
-                cv2.imshow('2048', game.disp)
+                tempdisp = np.copy(self.disp)
+                tempdisp[np.nonzero(self.edgedisp)] = self.edgedisp[np.nonzero(self.edgedisp)]
+                cv2.imshow('2048', tempdisp)
+                #time.sleep(1)
+                cv2.waitKey(250)
+                cv2.imshow('2048', self.disp)
             else:
                 print(self.stat)
             if D == 1:
                 self.putText('Game over !!', (int(self.w * 0.15), int(self.h * 0.5)), 2.5)
-                print('game over\t Score : {}'.format(game.score))
-                cv2.imshow('2048', game.disp)
+                print('game over\t Score : {}'.format(self.score))
+                cv2.imshow('2048', self.disp)
                 cv2.waitKey(-1)
                 time.sleep(3)
 
