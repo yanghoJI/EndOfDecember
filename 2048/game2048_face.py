@@ -13,6 +13,7 @@ faceCascade = cv2.CascadeClassifier(cascPath)
 video_capture = cv2.VideoCapture(0)
 
 cnt = 0
+
 avg = 5
 buf = [None] * avg
 prestat = None

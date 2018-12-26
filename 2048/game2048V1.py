@@ -205,13 +205,18 @@ class Game2048:
         if action != 'l':
             temparr = self.unrotArray(temparr, action)
 
+        poolact = False
         if (len(np.where(temparr == 0)[0]) != 0) and (not np.array_equal(temparr, self.stat)):
             temparr = self.fillNumber(temparr, 1)
+        elif np.array_equal(temparr, self.stat):
+            poolact = True
+
+
 
         self.stat = temparr
 
         S = self.stat
-        R = score
+        R = score if not poolact else -100
         D = 0
         if len(np.where(self.stat == 0)[0]) == 0:
             flag = self.cheakDone(self.stat)
